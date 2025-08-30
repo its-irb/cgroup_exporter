@@ -192,7 +192,7 @@ func getInfoV1(name string, metric *CgroupMetric, logger log.Logger) {
 		}
 		return
 	}
-	slurmPattern := regexp.MustCompile("^/slurm/uid_([0-9]+)/job_([0-9]+)(/step_([^/]+)(/task_([[0-9]+))?)?$")
+	slurmPattern := regexp.MustCompile("^/slurm/uid_([0-9]+)/job_([0-9]+)(/step_([^/]+)(/task_([0-9]+|special))?)?$")
 	slurmMatch := slurmPattern.FindStringSubmatch(name)
 	level.Debug(logger).Log("msg", "Got for match", "name", name, "len(slurmMatch)", len(slurmMatch), "slurmMatch", fmt.Sprintf("%v", slurmMatch))
 	if len(slurmMatch) >= 3 {
@@ -211,12 +211,13 @@ func getInfoV1(name string, metric *CgroupMetric, logger log.Logger) {
 func getInfoV2(name string, metric *CgroupMetric, logger log.Logger) {
 	// possibilities are /system.slice/slurmstepd.scope/job_211
 	//                   /system.slice/slurmstepd.scope/job_211/step_interactive
-	//                   /system.slice/slurmstepd.scope/job_211/step_extern/user/task_0
+	//                   /system.slice/slurmstepd.scope/job_211/step_batch/user/task_0
+	//                   /system.slice/slurmstepd.scope/job_211/step_batch/user/task_special
 	// we never ever get the uid
 	metric.uid = -1
 	// nor is there a userslice
 	metric.userslice = false
-	slurmPattern := regexp.MustCompile("^/system.slice/slurmstepd.scope/job_([0-9]+)(/step_([^/]+)(/user/task_([[0-9]+))?)?$")
+	slurmPattern := regexp.MustCompile("^/system.slice/slurmstepd.scope/job_([0-9]+)(/step_([^/]+)(/user/task_([0-9]+|special))?)?$")
 	slurmMatch := slurmPattern.FindStringSubmatch(name)
 	level.Debug(logger).Log("msg", "Got for match", "name", name, "len(slurmMatch)", len(slurmMatch), "slurmMatch", fmt.Sprintf("%v", slurmMatch))
 	if len(slurmMatch) == 6 {
