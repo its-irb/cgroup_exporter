@@ -42,9 +42,11 @@ const (
 
 var (
 	defCgroupRoot          = "/sys/fs/cgroup"
+	defSlurmScope          = "/system.slice/slurmstepd.scope"
 	listenAddress          = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9306").String()
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter (promhttp_*, process_*, go_*)").Default("false").Bool()
 	cgroupRoot             = kingpin.Flag("path.cgroup.root", "Root path to cgroup fs").Default(defCgroupRoot).String()
+	slurmScope             = kingpin.Flag("path.slurmstepd.scope", "Relative path to slurm cgroupv2 subdir").Default(defSlurmScope).String()
 	collectFullSlurm       = kingpin.Flag("collect.fullslurm", "Boolean that sets if to collect all slurm steps and tasks").Default("false").Bool()
 	cgroupV2               = false
 	metricLock             = sync.RWMutex{}
@@ -217,7 +219,7 @@ func getInfoV2(name string, metric *CgroupMetric, logger log.Logger) {
 	metric.uid = -1
 	// nor is there a userslice
 	metric.userslice = false
-	slurmPattern := regexp.MustCompile("^/system.slice/slurmstepd.scope/job_([0-9]+)(/step_([^/]+)(/user/task_([0-9]+|special))?)?$")
+	slurmPattern := regexp.MustCompile("^" + *slurmScope + "/job_([0-9]+)(/step_([^/]+)(/user/task_([0-9]+|special))?)?$")
 	slurmMatch := slurmPattern.FindStringSubmatch(name)
 	level.Debug(logger).Log("msg", "Got for match", "name", name, "len(slurmMatch)", len(slurmMatch), "slurmMatch", fmt.Sprintf("%v", slurmMatch))
 	if len(slurmMatch) == 6 {
@@ -400,7 +402,7 @@ func (e *Exporter) collect() (map[string]CgroupMetric, error) {
 	var fullPath string
 	if cgroupV2 {
 		topPath = *cgroupRoot
-		fullPath = topPath + "/system.slice/slurmstepd.scope"
+		fullPath = topPath + *slurmScope
 	} else {
 		topPath = *cgroupRoot + "/cpuacct"
 		fullPath = topPath + "/slurm"
