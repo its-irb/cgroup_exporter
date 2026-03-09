@@ -9,11 +9,9 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-
-  permissions:
-    contents: write
-
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
